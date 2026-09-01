@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Квест безпечного дослідника 2026</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent-color: #38bdf8;
+            --accent-success: #22c55e;
+            --accent-error: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg-primary);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(34, 197, 94, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            overflow-x: hidden;
+        }
+
+        header {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .score-board {
+            font-size: 1rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+        }
+
+        main {
+            width: 100%;
+            max-width: 900px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Map Grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            width: 100%;
+        }
+
+        @media (max-width: 600px) {
+            .grid-container {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+        }
+
+        .node-btn {
+            aspect-ratio: 1;
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s, background-color 0.2s;
+            font-size: 1.8rem;
+            position: relative;
+        }
+
+        .node-btn:active {
+            transform: scale(0.95);
+        }
+
+        .node-btn.active {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+
+        .node-btn.passed {
+            border-color: var(--accent-success);
+            background: rgba(34, 197, 94, 0.15);
+        }
+
+        .node-btn.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .node-number {
+            font-size: 0.75rem;
+            position: absolute;
+            top: 8px;
+            left: 10px;
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+
+        /* Modal Overlay */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .card {
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem;
+            border-radius: 16px;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            line-height: 1.4;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            padding: 1.2rem;
+            border-radius: 16px;
+            font-size: 1rem;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:active {
+            transform: scale(0.98);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .option-btn.correct {
+            background: var(--accent-success) !important;
+            color: #fff;
+            border-color: var(--accent-success);
+        }
+
+        .option-btn.wrong {
+            background: var(--accent-error) !important;
+            color: #fff;
+            border-color: var(--accent-error);
+        }
+
+        /* End Screen */
+        .end-screen {
+            text-align: center;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .end-screen.show {
+            display: flex;
+        }
+
+        .restart-btn {
+            background: var(--accent-color);
+            color: #0f172a;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .restart-btn:active {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🧭 Квест дослідника</h1>
+        <div class="score-board">Прогрес: <span id="progress">0</span> / 12</div>
+    </header>
+
+    <main>
+        <div class="grid-container" id="grid"></div>
+
+        <div class="end-screen" id="endScreen">
+            <div style="font-size: 4rem;">🏆</div>
+            <h2>Вітаємо з успішним завершенням!</h2>
+            <p id="finalScoreText">Ви пройшли всі 12 локацій наукового квесту.</p>
+            <button class="restart-btn" onclick="resetGame()">Пройти знову</button>
+        </div>
+    </main>
+
+    <!-- Modal for Questions -->
+    <div class="modal" id="modal">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon" id="qIcon">🌳</div>
+                <div class="card-title" id="qText">Текст запитання...</div>
+            </div>
+            <div class="options-grid" id="options"></div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            { icon: "🌳", title: "Що з переліченого є тілом ЖИВОЇ природи?", options: ["Гірська порода 🪨", "Сонечко (комаха) 🐞", "Річковий пісок 🏖️"], correct: 1 },
+            { icon: "🪨", title: "Знайди РУКОТВОРНЕ тіло (створене людиною):", options: ["Морська мушля 🐚", "Пластикова пляшка 🍾", "Хмара в небі ☁️"], correct: 1 },
+            { icon: "🌋", title: "Чому вулкан вивчають за допомогою МОДЕЛІ, а не впритул?", options: ["Це нецікаво", "Це небезпечно для життя ⚠️", "Вулкан занадто малий"], correct: 1 },
+            { icon: "💧", title: "Океан — це об'єкт природи. А що таке ГЛОБУС?", options: ["Рукотворна модель Землі 🌍", "Живий організм", "Явище природи"], correct: 0 },
+            { icon: "📖", title: "Де найточніше шукати класифікацію птахів?", options: ["В науковій енциклопедії 📚", "У вигаданому мультфільмі 🎬", "У повідомленні без автора"], correct: 0 },
+            { icon: "🔍", title: "Яке призначення має МІКРОСКОП або ЛУПА?", options: ["Змінює колір об'єкта", "Дозволяє розглянути дрібні деталі 🔬", "Вимірює вагу тіла"], correct: 1 },
+            { icon: "🗺️", title: "Що є КАРТОГРАФІЧНИМ джерелом знань?", options: ["Атлас матеріалів", "Фізична карта України 🗺️", "Лабораторний термометр 🌡️"], correct: 1 },
+            { icon: "📱", title: "У чому перевага 3D-моделі чи AR (доповненої реальності)?", options: ["Замінює природу назавжди", "Дозволяє роздивитися з усіх боків 🔄", "З нею не треба вчитися"], correct: 1 },
+            { icon: "🍓", title: "Ти знайшов у лісі невідому красиву ягоду. Твої дії?", options: ["Спробувати на смак", "Зірвати й розтерти в руках", "Не торкатися і не куштувати 🚫"], correct: 2 },
+            { icon: "⚠️", title: "Головне правило безпеки під час дослідження в класі:", options: ["Бігати з приладами", "Працювати обережно, слухати вчителя 🥼", "Торкатися всього без дозволу"], correct: 1 },
+            { icon: "🤝", title: "Ваш партнер у парі пропонує ідею. Як вчинити?", options: ["Перебити й сказати, що це погано", "Дослухати та обговорити разом 💬", "Проігнорувати"], correct: 1 },
+            { icon: "🏆", title: "Чому моделі та джерела знань важливі для людини?", options: ["Допомагають безпечно пізнавати світ 🌟", "Потрібні тільки для оцінки", "Замінюють прогулянки на повітрі"], correct: 0 }
+        ];
+
+        let currentIndex = 0;
+        let score = 0;
+
+        const gridEl = document.getElementById('grid');
+        const modalEl = document.getElementById('modal');
+        const qIconEl = document.getElementById('qIcon');
+        const qTextEl = document.getElementById('qText');
+        const optionsEl = document.getElementById('options');
+        const progressEl = document.getElementById('progress');
+        const endScreenEl = document.getElementById('endScreen');
+
+        function initGame() {
+            gridEl.innerHTML = '';
+            gridEl.style.display = 'grid';
+            endScreenEl.classList.remove('show');
+            score = 0;
+            currentIndex = 0;
+            progressEl.textContent = score;
+
+            questions.forEach((q, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `node-btn ${idx === 0 ? 'active' : 'disabled'}`;
+                btn.id = `node-${idx}`;
+                btn.onclick = () => openQuestion(idx);
+                
+                const num = document.createElement('span');
+                num.className = 'node-number';
+                num.textContent = idx + 1;
+
+                btn.appendChild(num);
+                btn.appendChild(document.createTextNode(q.icon));
+                gridEl.appendChild(btn);
+            });
+        }
+
+        function openQuestion(index) {
+            if (index !== currentIndex) return;
+            const q = questions[index];
+            qIconEl.textContent = q.icon;
+            qTextEl.textContent = q.title;
+            optionsEl.innerHTML = '';
+
+            q.options.forEach((optText, optIdx) => {
+                const optBtn = document.createElement('button');
+                optBtn.className = 'option-btn';
+                optBtn.textContent = optText;
+                optBtn.onclick = () => handleAnswer(optIdx, q.correct);
+                optionsEl.appendChild(optBtn);
+            });
+
+            modalEl.classList.add('open');
+        }
+
+        function handleAnswer(selected, correct) {
+            const btns = optionsEl.children;
+            for (let b of btns) b.style.pointerEvents = 'none';
+
+            if (selected === correct) {
+                btns[selected].classList.add('correct');
+                setTimeout(() => {
+                    modalEl.classList.remove('open');
+                    completeNode(currentIndex);
+                }, 1000);
+            } else {
+                btns[selected].classList.add('wrong');
+                btns[correct].classList.add('correct');
+                setTimeout(() => {
+                    modalEl.classList.remove('open');
+                    resetCurrentNode();
+                }, 1500);
+            }
+        }
+
+        function completeNode(index) {
+            const currentNode = document.getElementById(`node-${index}`);
+            currentNode.classList.remove('active');
+            currentNode.classList.add('passed');
+            
+            score++;
+            progressEl.textContent = score;
+            currentIndex++;
+
+            if (currentIndex < questions.length) {
+                const nextNode = document.getElementById(`node-${currentIndex}`);
+                nextNode.classList.remove('disabled');
+                nextNode.classList.add('active');
+            } else {
+                showWinScreen();
+            }
+        }
+
+        function resetCurrentNode() {
+            // Re-enable interactions without advancing
+            const btns = optionsEl.children;
+            for (let b of btns) b.style.pointerEvents = 'auto';
+        }
+
+        function showWinScreen() {
+            gridEl.style.display = 'none';
+            endScreenEl.classList.add('show');
+        }
+
+        function resetGame() {
+            initGame();
+        }
+
+        // Run on load
+        initGame();
+    </script>
+</body>
+</html>
